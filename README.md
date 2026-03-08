@@ -3,12 +3,12 @@ Repositório criado para o projeto final de Engenharia de Dados
 
 Grupo 1
 
-André Thadeu Queiroz dos Santos | RA: 10729257
-Mayra Lopes Moreira | RA: 10161587
-Paulo André Valdir dos Santos Ribeiro Silva | RA: 10109016
-Roberto Amaro Alves de Medeiros | RA: 10728896
-Rodrigo Luchini Ferreira | RA: 10121256
-Talohama Dayane Ferreira Marques | RA: 10730226
+André Thadeu Queiroz dos Santos RA: 10729257 || 
+Mayra Lopes Moreira RA: 10161587 || 
+Paulo André Valdir dos Santos Ribeiro Silva RA: 10109016 || 
+Roberto Amaro Alves de Medeiros RA: 10728896 || 
+Rodrigo Luchini Ferreira RA: 10121256 || 
+Talohama Dayane Ferreira Marques RA: 10730226
 
 
 
