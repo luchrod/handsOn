@@ -14,29 +14,31 @@ provider "aws" {
 ############################
 # S3 BUCKETS
 ############################
-
 resource "aws_s3_bucket" "raw" {
-  bucket = "datalake-raw-bucket-demo"
+  bucket = "s3-layer-raw"
 }
 
 resource "aws_s3_bucket" "refined" {
-  bucket = "datalake-refined-bucket-demo"
+  bucket = "s3-layer-refined"
 }
 
 resource "aws_s3_bucket" "spec" {
-  bucket = "datalake-spec-bucket-demo"
+  bucket = "s3-layer-spec"
 }
 
 resource "aws_s3_bucket" "ml" {
-  bucket = "datalake-ml-bucket-demo"
+  bucket = "s3-layer-machine-learning"
+}
+
+resource "aws_s3_bucket" "captura" {
+  bucket = "s3-layer-captura"
 }
 
 ############################
 # KINESIS
 ############################
-
 resource "aws_kinesis_stream" "data_stream" {
-  name             = "refined-stream"
+  name             = "Kinesis-layer-refined"
   shard_count      = 1
   retention_period = 24
 }
@@ -44,18 +46,15 @@ resource "aws_kinesis_stream" "data_stream" {
 ############################
 # SNS
 ############################
-
 resource "aws_sns_topic" "raw_topic" {
-  name = "raw-topic"
+  name = "sqs-layer-raw"
 }
 
 ############################
 # IAM ROLE LAMBDA
 ############################
-
 resource "aws_iam_role" "lambda_role" {
   name = "lambda_pipeline_role"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -71,16 +70,11 @@ resource "aws_iam_role" "lambda_role" {
 ############################
 # LAMBDA
 ############################
-
 resource "aws_lambda_function" "trigger_kinesis" {
-
-  function_name = "lambda-send-kinesis"
-
-  role = aws_iam_role.lambda_role.arn
-
-  runtime = "python3.9"
-  handler = "index.handler"
-
+  function_name    = "lambda-send-kinesis"
+  role             = aws_iam_role.lambda_role.arn
+  runtime          = "python3.9"
+  handler          = "index.handler"
   filename         = "lambda.zip"
   source_code_hash = filebase64sha256("lambda.zip")
 
@@ -94,9 +88,7 @@ resource "aws_lambda_function" "trigger_kinesis" {
 ############################
 # SNS -> LAMBDA
 ############################
-
 resource "aws_sns_topic_subscription" "lambda_sub" {
-
   topic_arn = aws_sns_topic.raw_topic.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.trigger_kinesis.arn
@@ -105,10 +97,8 @@ resource "aws_sns_topic_subscription" "lambda_sub" {
 ############################
 # IAM ROLE GLUE
 ############################
-
 resource "aws_iam_role" "glue_role" {
   name = "glue-role"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -124,14 +114,12 @@ resource "aws_iam_role" "glue_role" {
 ############################
 # GLUE JOB
 ############################
-
 resource "aws_glue_job" "transform_job" {
-
-  name     = "raw-to-refined-job"
+  name     = "aws-glue-assets-271547278649-us-east-1"
   role_arn = aws_iam_role.glue_role.arn
 
   command {
-    script_location = "s3://${aws_s3_bucket.raw.bucket}/scripts/glue-script.py"
+    script_location = "s3://aws-glue-assets-271547278649-us-east-1/scripts/glue-script.py"
     python_version  = "3"
   }
 
@@ -139,77 +127,14 @@ resource "aws_glue_job" "transform_job" {
 }
 
 ############################
-# DMS
-############################
-
-resource "aws_dms_replication_instance" "dms_instance" {
-
-  replication_instance_id = "dms-instance"
-
-  replication_instance_class = "dms.t3.micro"
-
-  allocated_storage = 20
-}
-
-############################
 # ATHENA
 ############################
-
 resource "aws_athena_workgroup" "athena_spec" {
-
   name = "spec-workgroup"
 
   configuration {
-
     result_configuration {
-
       output_location = "s3://${aws_s3_bucket.spec.bucket}/athena-results/"
     }
   }
-}
-
-############################
-# IAM ROLE SAGEMAKER
-############################
-
-resource "aws_iam_role" "sagemaker_role" {
-
-  name = "sagemaker-execution-role"
-
-  assume_role_policy = jsonencode({
-
-    Version = "2012-10-17"
-
-    Statement = [{
-
-      Effect = "Allow"
-
-      Principal = {
-        Service = "sagemaker.amazonaws.com"
-      }
-
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-############################
-# SAGEMAKER NOTEBOOK
-############################
-
-resource "aws_sagemaker_notebook_instance" "ml_notebook" {
-
-  name          = "ml-datalake-notebook"
-
-  instance_type = "ml.t2.medium"
-
-  role_arn = aws_iam_role.sagemaker_role.arn
-
-  default_code_repository = null
-
-  lifecycle_config_name = null
-
-  direct_internet_access = "Enabled"
-
-  root_access = "Enabled"
 }
